@@ -1,0 +1,75 @@
+ARM TEMPLATE:
+
+
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    // Define necessary parameters like location, names, and configurations
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Network/virtualNetworks",
+      "apiVersion": "2020-06-01",
+      "name": "[parameters('vnetName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": ["10.0.0.0/16"]
+        },
+        "subnets": [
+          {
+            "name": "AKSSubnet",
+            "properties": {
+              "addressPrefix": "10.0.1.0/24"
+            }
+          },
+          {
+            "name": "CosmosDBSubnet",
+            "properties": {
+              "addressPrefix": "10.0.2.0/24",
+              "serviceEndpoints": [
+                {
+                  "service": "Microsoft.AzureCosmosDB"
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.ContainerService/managedClusters",
+      "apiVersion": "2021-03-01",
+      "name": "[parameters('aksName')]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks', parameters('vnetName'))]"
+      ],
+      "properties": {
+        "dnsPrefix": "[parameters('dnsPrefixForAKS')]",
+        "agentPoolProfiles": [
+          {
+            "name": "agentpool",
+            "count": 3,
+            "vmSize": "Standard_DS2_v2",
+            "osType": "Linux",
+            "vnetSubnetID": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vnetName'), 'AKSSubnet')]"
+          }
+        ],
+        // Other necessary AKS configurations
+      }
+    },
+    // Cosmos DB and Key Vault resources go here
+  ],
+  "outputs": {
+    // Define outputs
+  }
+}
+
+
+
+
+
+
+
